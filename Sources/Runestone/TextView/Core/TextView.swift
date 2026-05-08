@@ -143,6 +143,22 @@ open class TextView: UIScrollView {
             textInputView.returnKeyType = newValue
         }
     }
+    /// The Apple Intelligence Writing Tools behavior for the text view.
+    ///
+    /// Set this to `.none` to suppress the Writing Tools UI on a text view that
+    /// edits content where Writing Tools would not be useful, e.g. source code.
+    /// The system reads this trait through `UITextInputTraits` and applies it
+    /// to the underlying input view automatically. Mirrors
+    /// [UITextView.writingToolsBehavior](https://developer.apple.com/documentation/uikit/uitextview/writingtoolsbehavior).
+    @available(iOS 18.0, *)
+    public var writingToolsBehavior: UIWritingToolsBehavior {
+        get {
+            textInputView.writingToolsBehavior
+        }
+        set {
+            textInputView.writingToolsBehavior = newValue
+        }
+    }
     /// Returns the undo manager used by the text view.
     override public var undoManager: UndoManager? {
         textInputView.undoManager

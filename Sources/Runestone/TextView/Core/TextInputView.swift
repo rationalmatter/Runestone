@@ -113,6 +113,22 @@ final class TextInputView: UIView, UITextInput {
     var keyboardType: UIKeyboardType = .default
     var keyboardAppearance: UIKeyboardAppearance = .default
     var returnKeyType: UIReturnKeyType = .default
+    /// Backing storage for `writingToolsBehavior`. Stored as the raw `Int` so the
+    /// declaration is not guarded by `@available` (Swift forbids `@available` on
+    /// stored properties). Default `0` matches `UIWritingToolsBehavior.default`.
+    private var _writingToolsBehaviorRawValue: Int = 0
+    /// Apple Intelligence Writing Tools availability for this view, exposed via
+    /// the `UITextInputTraits` trait the system reads through Obj-C dispatch on
+    /// iOS 18 and later. Mirrors `UITextView.writingToolsBehavior`.
+    @available(iOS 18.0, *)
+    @objc var writingToolsBehavior: UIWritingToolsBehavior {
+        get {
+            UIWritingToolsBehavior(rawValue: _writingToolsBehaviorRawValue) ?? .default
+        }
+        set {
+            _writingToolsBehaviorRawValue = newValue.rawValue
+        }
+    }
     @objc var insertionPointColor: UIColor = .label {
         didSet {
             if insertionPointColor != oldValue {
