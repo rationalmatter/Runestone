@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// The methods for receiving editing-related messages for the text view.
 public protocol TextViewDelegate: AnyObject {
@@ -101,6 +102,16 @@ public protocol TextViewDelegate: AnyObject {
     ///
     /// The text view will call this method when the user chooses to replace the text in the highlighted range, for example by selecting the action in a [UIMenuController](https://developer.apple.com/documentation/uikit/uimenucontroller).
     func textView(_ textView: TextView, replaceTextIn highlightedRange: HighlightedRange)
+    /// Asks the delegate for the contextual edit menu to display for the specified range.
+    /// - Parameters:
+    ///   - textView: The text view requesting the menu.
+    ///   - range: The range of text the menu will act on.
+    ///   - suggestedActions: The actions the text view would have shown by default, including any built-in items such as Replace.
+    /// - Returns: A custom `UIMenu` to display in place of the default, or `nil` to use the default menu built from `suggestedActions`.
+    ///
+    /// Mirrors [UITextViewDelegate.textView(_:editMenuForTextIn:suggestedActions:)](https://developer.apple.com/documentation/uikit/uitextviewdelegate/textview(_:editmenufortextin:suggestedactions:)) so callers can append, replace, or reorder items. Only invoked on iOS 16 and later.
+    @available(iOS 16.0, *)
+    func textView(_ textView: TextView, editMenuForTextIn range: NSRange, suggestedActions: [UIMenuElement]) -> UIMenu?
 }
 
 public extension TextViewDelegate {
@@ -147,4 +158,9 @@ public extension TextViewDelegate {
     }
 
     func textView(_ textView: TextView, replaceTextIn highlightedRange: HighlightedRange) {}
+
+    @available(iOS 16.0, *)
+    func textView(_ textView: TextView, editMenuForTextIn range: NSRange, suggestedActions: [UIMenuElement]) -> UIMenu? {
+        nil
+    }
 }

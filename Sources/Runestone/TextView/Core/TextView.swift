@@ -1429,6 +1429,15 @@ extension TextView: TextInputViewDelegate {
     func textInputView(_ view: TextInputView, replaceTextIn highlightedRange: HighlightedRange) {
         editorDelegate?.textView(self, replaceTextIn: highlightedRange)
     }
+
+    @available(iOS 16.0, *)
+    func textInputView(
+        _ view: TextInputView,
+        editMenuForTextIn range: NSRange,
+        suggestedActions: [UIMenuElement]
+    ) -> UIMenu? {
+        editorDelegate?.textView(self, editMenuForTextIn: range, suggestedActions: suggestedActions)
+    }
 }
 
 // MARK: - HighlightNavigationControllerDelegate
