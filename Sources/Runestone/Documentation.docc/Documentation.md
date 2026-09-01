@@ -51,6 +51,7 @@ The appearance of <doc:TextView> can be customized using a <doc:Theme>. This is 
 - <doc:CreatingATheme>
 - ``Theme``
 - ``FontTraits``
+- ``BackgroundStyle``
 - ``DefaultTheme``
 - ``LineBreakMode``
 - ``LineSelectionDisplayType``
