@@ -69,9 +69,9 @@ private extension LineFragmentRenderer {
         for syntaxBackgroundFragment in syntaxBackgroundFragments {
             let rect = rect(for: syntaxBackgroundFragment, inCanvasOfSize: canvasSize)
             let roundedCorners = syntaxBackgroundFragment.roundedCorners
+            let cornerRadius = syntaxBackgroundFragment.cornerRadius
             context.setFillColor(syntaxBackgroundFragment.color.cgColor)
-            if !roundedCorners.isEmpty && syntaxBackgroundFragment.cornerRadius > 0 {
-                let cornerRadius = syntaxBackgroundFragment.cornerRadius
+            if !roundedCorners.isEmpty && cornerRadius > 0 {
                 let cornerRadii = CGSize(width: cornerRadius, height: cornerRadius)
                 let bezierPath = UIBezierPath(roundedRect: rect, byRoundingCorners: roundedCorners, cornerRadii: cornerRadii)
                 context.addPath(bezierPath.cgPath)
@@ -79,8 +79,48 @@ private extension LineFragmentRenderer {
             } else {
                 context.fill(rect)
             }
+            if let strokeColor = syntaxBackgroundFragment.strokeColor {
+                strokeSyntaxBackground(rect,
+                                       to: context,
+                                       color: strokeColor,
+                                       width: syntaxBackgroundFragment.strokeWidth,
+                                       roundedCorners: roundedCorners,
+                                       cornerRadius: cornerRadius)
+            }
         }
         context.restoreGState()
+    }
+
+    /// Strokes the edge of a syntax background, inside its bounds.
+    ///
+    /// The path is inset by half the stroke width so the stroke does not spill outside the
+    /// background's rect — backgrounds on consecutive lines touch, and a centered stroke would
+    /// overlap the neighbor.
+    private func strokeSyntaxBackground(_ rect: CGRect,
+                                        to context: CGContext,
+                                        color: UIColor,
+                                        width: CGFloat,
+                                        roundedCorners: UIRectCorner,
+                                        cornerRadius: CGFloat) {
+        // UITraitCollection.current carries the display scale during UIView.draw; a bare context,
+        // as in tests, reports 0 and falls back to a one-point hairline.
+        let displayScale = max(UITraitCollection.current.displayScale, 1)
+        let lineWidth = width > 0 ? width : 1 / displayScale
+        let strokeRect = rect.insetBy(dx: lineWidth / 2, dy: lineWidth / 2)
+        guard strokeRect.width > 0 && strokeRect.height > 0 else {
+            return
+        }
+        context.setStrokeColor(color.cgColor)
+        context.setLineWidth(lineWidth)
+        if !roundedCorners.isEmpty && cornerRadius > 0 {
+            let insetCornerRadius = max(cornerRadius - lineWidth / 2, 0)
+            let cornerRadii = CGSize(width: insetCornerRadius, height: insetCornerRadius)
+            let bezierPath = UIBezierPath(roundedRect: strokeRect, byRoundingCorners: roundedCorners, cornerRadii: cornerRadii)
+            context.addPath(bezierPath.cgPath)
+            context.strokePath()
+        } else {
+            context.stroke(strokeRect)
+        }
     }
 
     private func drawHighlightedRanges(to context: CGContext, inCanvasOfSize canvasSize: CGSize) {

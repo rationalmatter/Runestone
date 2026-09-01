@@ -26,15 +26,31 @@ public struct BackgroundStyle: Equatable {
     /// text view, for example a fenced code block, and `false` for backgrounds that hug the text,
     /// for example inline code. Defaults to `false`.
     public var fillsLineWidth: Bool
+    /// Color to stroke the background's edge with, or `nil` for no stroke. Defaults to `nil`.
+    ///
+    /// The stroke is drawn inside the background's bounds, so backgrounds on consecutive lines
+    /// stay visually separate instead of merging where they touch. A background that wraps onto
+    /// multiple line fragments strokes each fragment's rect separately.
+    public var strokeColor: UIColor?
+    /// Width of the stroke. A value of zero or less means a one-pixel hairline. Defaults to 0.
+    public var strokeWidth: CGFloat
 
     /// Creates a background to be drawn behind text matching a capture sequence.
     /// - Parameters:
     ///   - color: Color to fill the background with.
     ///   - cornerRadius: Corner radius of the background. A value of zero or less means that the background has square corners.
     ///   - fillsLineWidth: Whether the background extends to the trailing edge of the container.
-    public init(color: UIColor, cornerRadius: CGFloat = 0, fillsLineWidth: Bool = false) {
+    ///   - strokeColor: Color to stroke the background's edge with, or `nil` for no stroke.
+    ///   - strokeWidth: Width of the stroke. A value of zero or less means a one-pixel hairline.
+    public init(color: UIColor,
+                cornerRadius: CGFloat = 0,
+                fillsLineWidth: Bool = false,
+                strokeColor: UIColor? = nil,
+                strokeWidth: CGFloat = 0) {
         self.color = color
         self.cornerRadius = cornerRadius
         self.fillsLineWidth = fillsLineWidth
+        self.strokeColor = strokeColor
+        self.strokeWidth = strokeWidth
     }
 }

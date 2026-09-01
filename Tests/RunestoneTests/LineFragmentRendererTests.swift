@@ -48,6 +48,36 @@ final class LineFragmentRendererTests: XCTestCase {
         XCTAssertEqual(pixel.alpha, 255)
     }
 
+    func testStrokeIsDrawnInsideTheBackgroundBounds() {
+        let lineFragment = makeLineFragment()
+        let renderer = makeRenderer(for: lineFragment)
+        renderer.syntaxBackgroundFragments = [
+            makeSyntaxBackgroundFragment(range: NSRange(location: 0, length: text.utf16.count),
+                                         color: .blue,
+                                         fillsLineWidth: true,
+                                         strokeColor: .red,
+                                         strokeWidth: 2)
+        ]
+        // The bottom row is the background's own boundary row, so an inside stroke covers it
+        // where a strokeless background would show the fill.
+        let pixel = drawnPixel(with: renderer, atX: Int(canvasWidth) - 5)
+        XCTAssertGreaterThan(pixel.red, 200)
+        XCTAssertLessThan(pixel.blue, 55)
+    }
+
+    func testWithoutAStrokeTheBoundaryRowShowsTheFill() {
+        let lineFragment = makeLineFragment()
+        let renderer = makeRenderer(for: lineFragment)
+        renderer.syntaxBackgroundFragments = [
+            makeSyntaxBackgroundFragment(range: NSRange(location: 0, length: text.utf16.count),
+                                         color: .blue,
+                                         fillsLineWidth: true)
+        ]
+        let pixel = drawnPixel(with: renderer, atX: Int(canvasWidth) - 5)
+        XCTAssertGreaterThan(pixel.blue, 200)
+        XCTAssertLessThan(pixel.red, 55)
+    }
+
     func testHighlightedRangeIsDrawnOnTopOfSyntaxBackground() {
         let lineFragment = makeLineFragment()
         let renderer = makeRenderer(for: lineFragment)
@@ -105,11 +135,17 @@ private extension LineFragmentRendererTests {
 
     private func makeSyntaxBackgroundFragment(range: NSRange,
                                               color: UIColor = .red,
-                                              fillsLineWidth: Bool = false) -> SyntaxBackgroundFragment {
+                                              fillsLineWidth: Bool = false,
+                                              strokeColor: UIColor? = nil,
+                                              strokeWidth: CGFloat = 0) -> SyntaxBackgroundFragment {
         SyntaxBackgroundFragment(range: range,
                                  containsStart: true,
                                  containsEnd: true,
-                                 style: BackgroundStyle(color: color, cornerRadius: 0, fillsLineWidth: fillsLineWidth))
+                                 style: BackgroundStyle(color: color,
+                                                        cornerRadius: 0,
+                                                        fillsLineWidth: fillsLineWidth,
+                                                        strokeColor: strokeColor,
+                                                        strokeWidth: strokeWidth))
     }
 
     /// Draws the line fragment to a bitmap and reads a single pixel of the drawing.
