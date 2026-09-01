@@ -110,7 +110,10 @@ private extension TreeSitterSyntaxHighlighter {
                 symbolicTraits.insert(.traitItalic)
             }
             let currentFont = attributedString.attribute(.font, at: token.range.location, effectiveRange: nil) as? UIFont
-            let baseFont = token.font ?? theme.font
+            // Inherit the font an earlier, enclosing capture may have applied rather than resetting
+            // to the theme's base font. Captures are sorted so enclosing captures are applied first,
+            // and the default attributes pass restores the base font before each highlighting pass.
+            let baseFont = token.font ?? currentFont ?? theme.font
             let newFont: UIFont
             if !symbolicTraits.isEmpty {
                 newFont = baseFont.withSymbolicTraits(symbolicTraits) ?? baseFont
