@@ -48,6 +48,26 @@ final class LineFragmentRendererTests: XCTestCase {
         XCTAssertEqual(pixel.alpha, 255)
     }
 
+    func testVerticalInsetLeavesAGapAtTheFragmentEdges() {
+        let lineFragment = makeLineFragment()
+        let renderer = makeRenderer(for: lineFragment)
+        let syntaxBackgroundFragment = makeSyntaxBackgroundFragment(range: NSRange(location: 4, length: 5), verticalInset: 1)
+        let canvasSize = CGSize(width: canvasWidth, height: lineFragment.scaledSize.height)
+        let rect = renderer.rect(for: syntaxBackgroundFragment, inCanvasOfSize: canvasSize)
+        XCTAssertEqual(rect.minY, 1, accuracy: 0.0001)
+        XCTAssertEqual(rect.maxY, lineFragment.scaledSize.height - 1, accuracy: 0.0001)
+    }
+
+    func testZeroVerticalInsetSpansTheFullFragmentHeight() {
+        let lineFragment = makeLineFragment()
+        let renderer = makeRenderer(for: lineFragment)
+        let syntaxBackgroundFragment = makeSyntaxBackgroundFragment(range: NSRange(location: 4, length: 5), fillsLineWidth: true)
+        let canvasSize = CGSize(width: canvasWidth, height: lineFragment.scaledSize.height)
+        let rect = renderer.rect(for: syntaxBackgroundFragment, inCanvasOfSize: canvasSize)
+        XCTAssertEqual(rect.minY, 0, accuracy: 0.0001)
+        XCTAssertEqual(rect.height, lineFragment.scaledSize.height, accuracy: 0.0001)
+    }
+
     func testStrokeIsDrawnInsideTheBackgroundBounds() {
         let lineFragment = makeLineFragment()
         let renderer = makeRenderer(for: lineFragment)
@@ -137,7 +157,8 @@ private extension LineFragmentRendererTests {
                                               color: UIColor = .red,
                                               fillsLineWidth: Bool = false,
                                               strokeColor: UIColor? = nil,
-                                              strokeWidth: CGFloat = 0) -> SyntaxBackgroundFragment {
+                                              strokeWidth: CGFloat = 0,
+                                              verticalInset: CGFloat = 0) -> SyntaxBackgroundFragment {
         SyntaxBackgroundFragment(range: range,
                                  containsStart: true,
                                  containsEnd: true,
@@ -145,7 +166,8 @@ private extension LineFragmentRendererTests {
                                                         cornerRadius: 0,
                                                         fillsLineWidth: fillsLineWidth,
                                                         strokeColor: strokeColor,
-                                                        strokeWidth: strokeWidth))
+                                                        strokeWidth: strokeWidth,
+                                                        verticalInset: verticalInset))
     }
 
     /// Draws the line fragment to a bitmap and reads a single pixel of the drawing.

@@ -56,7 +56,14 @@ final class LineFragmentRenderer {
         } else {
             endX = CTLineGetOffsetForStringIndex(lineFragment.line, range.upperBound, nil)
         }
-        return CGRect(x: startX, y: 0, width: endX - startX, height: lineFragment.scaledSize.height)
+        let rect = CGRect(x: startX, y: 0, width: endX - startX, height: lineFragment.scaledSize.height)
+        guard syntaxBackgroundFragment.verticalInset > 0 else {
+            return rect
+        }
+        // Line fragments tile exactly, so an inset here is what keeps backgrounds on
+        // consecutive lines from touching. A degenerate inset collapses the background.
+        let insetRect = rect.insetBy(dx: 0, dy: syntaxBackgroundFragment.verticalInset)
+        return insetRect.height > 0 ? insetRect : rect
     }
 }
 

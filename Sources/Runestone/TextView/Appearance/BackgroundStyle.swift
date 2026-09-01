@@ -34,6 +34,12 @@ public struct BackgroundStyle: Equatable {
     public var strokeColor: UIColor?
     /// Width of the stroke. A value of zero or less means a one-pixel hairline. Defaults to 0.
     public var strokeWidth: CGFloat
+    /// Points to inset the background from the top and bottom of each line fragment. Defaults to 0.
+    ///
+    /// Line fragments tile exactly, so backgrounds on consecutive lines touch edge to edge.
+    /// A positive inset leaves a gap between them. Backgrounds that should merge into a
+    /// continuous multi-line band, like a fenced code block, must keep this at zero.
+    public var verticalInset: CGFloat
 
     /// Creates a background to be drawn behind text matching a capture sequence.
     /// - Parameters:
@@ -42,15 +48,18 @@ public struct BackgroundStyle: Equatable {
     ///   - fillsLineWidth: Whether the background extends to the trailing edge of the container.
     ///   - strokeColor: Color to stroke the background's edge with, or `nil` for no stroke.
     ///   - strokeWidth: Width of the stroke. A value of zero or less means a one-pixel hairline.
+    ///   - verticalInset: Points to inset the background from the top and bottom of each line fragment.
     public init(color: UIColor,
                 cornerRadius: CGFloat = 0,
                 fillsLineWidth: Bool = false,
                 strokeColor: UIColor? = nil,
-                strokeWidth: CGFloat = 0) {
+                strokeWidth: CGFloat = 0,
+                verticalInset: CGFloat = 0) {
         self.color = color
         self.cornerRadius = cornerRadius
         self.fillsLineWidth = fillsLineWidth
         self.strokeColor = strokeColor
         self.strokeWidth = strokeWidth
+        self.verticalInset = verticalInset
     }
 }

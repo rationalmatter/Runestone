@@ -34,6 +34,10 @@ struct SyntaxBackgroundFragment: Equatable {
     var strokeWidth: CGFloat {
         style.strokeWidth
     }
+
+    var verticalInset: CGFloat {
+        style.verticalInset
+    }
     /// Corners to round when drawing the background.
     var roundedCorners: UIRectCorner {
         if containsStart && containsEnd {
