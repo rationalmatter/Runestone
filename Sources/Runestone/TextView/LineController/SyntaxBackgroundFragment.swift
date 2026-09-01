@@ -26,6 +26,14 @@ struct SyntaxBackgroundFragment: Equatable {
     var fillsLineWidth: Bool {
         style.fillsLineWidth
     }
+
+    var strokeColor: UIColor? {
+        style.strokeColor
+    }
+
+    var strokeWidth: CGFloat {
+        style.strokeWidth
+    }
     /// Corners to round when drawing the background.
     var roundedCorners: UIRectCorner {
         if containsStart && containsEnd {
