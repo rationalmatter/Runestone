@@ -6,22 +6,24 @@ final class TreeSitterSyntaxHighlightToken {
     let shadow: NSShadow?
     let font: UIFont?
     let fontTraits: FontTraits
+    let background: BackgroundStyle?
     var isEmpty: Bool {
-        range.length == 0 || (textColor == nil && font == nil && shadow == nil)
+        range.length == 0 || (textColor == nil && font == nil && shadow == nil && background == nil)
     }
 
-    init(range: NSRange, textColor: UIColor?, shadow: NSShadow?, font: UIFont?, fontTraits: FontTraits) {
+    init(range: NSRange, textColor: UIColor?, shadow: NSShadow?, font: UIFont?, fontTraits: FontTraits, background: BackgroundStyle?) {
         self.range = range
         self.textColor = textColor
         self.shadow = shadow
         self.font = font
         self.fontTraits = fontTraits
+        self.background = background
     }
 }
 
 extension TreeSitterSyntaxHighlightToken: Equatable {
     static func == (lhs: TreeSitterSyntaxHighlightToken, rhs: TreeSitterSyntaxHighlightToken) -> Bool {
-        lhs.range == rhs.range && lhs.textColor == rhs.textColor && lhs.font == rhs.font
+        lhs.range == rhs.range && lhs.textColor == rhs.textColor && lhs.font == rhs.font && lhs.background == rhs.background
     }
 }
 

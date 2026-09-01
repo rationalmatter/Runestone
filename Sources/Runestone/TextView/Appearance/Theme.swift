@@ -51,6 +51,12 @@ public protocol Theme: AnyObject {
     ///
     /// See <doc:CreatingATheme> for more information on higlight names.
     func shadow(for highlightName: String) -> NSShadow?
+    /// Background drawn behind text matching the capture sequence.
+    ///
+    /// Return `nil`, as the default implementation does, to draw no background behind the text.
+    ///
+    /// See <doc:CreatingATheme> for more information on higlight names.
+    func background(for highlightName: String) -> BackgroundStyle?
     /// Highlighted range for a text range matching a search query.
     ///
     /// This function is called when highlighting a search result that was found using the standard find/replace interaction enabled using <doc:TextView/isFindInteractionEnabled>.
@@ -86,6 +92,10 @@ public extension Theme {
     }
 
     func shadow(for highlightName: String) -> NSShadow? {
+        nil
+    }
+
+    func background(for highlightName: String) -> BackgroundStyle? {
         nil
     }
 

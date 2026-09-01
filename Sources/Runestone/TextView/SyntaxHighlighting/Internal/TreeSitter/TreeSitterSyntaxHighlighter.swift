@@ -97,6 +97,11 @@ private extension TreeSitterSyntaxHighlighter {
             if token.fontTraits.contains(.italic) {
                 attributedString.addAttribute(.isItalic, value: true, range: token.range)
             }
+            if let background = token.background {
+                // Core Text ignores .backgroundColor so the background is stored as an attribute
+                // that LineFragmentRenderer draws underneath the text.
+                attributedString.addAttribute(.syntaxBackground, value: background, range: token.range)
+            }
             var symbolicTraits: UIFontDescriptor.SymbolicTraits = []
             if let isBold = attributedString.attribute(.isBold, at: token.range.location, effectiveRange: nil) as? Bool, isBold {
                 symbolicTraits.insert(.traitBold)
@@ -150,7 +155,15 @@ private extension TreeSitterSyntaxHighlighter {
         let shadow = theme.shadow(for: capture.name)
         let font = theme.font(for: capture.name)
         let fontTraits = theme.fontTraits(for: capture.name)
-        return TreeSitterSyntaxHighlightToken(range: range, textColor: textColor, shadow: shadow, font: font, fontTraits: fontTraits)
+        let background = theme.background(for: capture.name)
+        return TreeSitterSyntaxHighlightToken(
+            range: range,
+            textColor: textColor,
+            shadow: shadow,
+            font: font,
+            fontTraits: fontTraits,
+            background: background
+        )
     }
 }
 
