@@ -18,6 +18,7 @@ final class LineFragmentRenderer {
     var markedTextBackgroundColor: UIColor = .systemFill
     var markedTextBackgroundCornerRadius: CGFloat = 0
     var highlightedRangeFragments: [HighlightedRangeFragment] = []
+    var syntaxBackgroundFragments: [SyntaxBackgroundFragment] = []
 
     private var showInvisibleCharacters: Bool {
         invisibleCharacterConfiguration.showTabs
@@ -32,14 +33,56 @@ final class LineFragmentRenderer {
     }
 
     func draw(to context: CGContext, inCanvasOfSize canvasSize: CGSize) {
+        // Backgrounds of syntax highlighted ranges are decoration and are drawn first so that
+        // search results and marked text are drawn on top of them.
+        drawSyntaxBackgrounds(to: context, inCanvasOfSize: canvasSize)
         drawHighlightedRanges(to: context, inCanvasOfSize: canvasSize)
         drawMarkedRange(to: context)
         drawInvisibleCharacters()
         drawText(to: context)
     }
+
+    /// Rect to fill with the background of a syntax highlighted range.
+    /// - Parameters:
+    ///   - syntaxBackgroundFragment: Background to compute the rect of.
+    ///   - canvasSize: Size of the canvas the line fragment is drawn in.
+    /// - Returns: Rect of the background, relative to the line fragment.
+    func rect(for syntaxBackgroundFragment: SyntaxBackgroundFragment, inCanvasOfSize canvasSize: CGSize) -> CGRect {
+        let range = syntaxBackgroundFragment.range
+        let startX = CTLineGetOffsetForStringIndex(lineFragment.line, range.lowerBound, nil)
+        let endX: CGFloat
+        if syntaxBackgroundFragment.fillsLineWidth {
+            endX = canvasSize.width
+        } else {
+            endX = CTLineGetOffsetForStringIndex(lineFragment.line, range.upperBound, nil)
+        }
+        return CGRect(x: startX, y: 0, width: endX - startX, height: lineFragment.scaledSize.height)
+    }
 }
 
 private extension LineFragmentRenderer {
+    private func drawSyntaxBackgrounds(to context: CGContext, inCanvasOfSize canvasSize: CGSize) {
+        guard !syntaxBackgroundFragments.isEmpty else {
+            return
+        }
+        context.saveGState()
+        for syntaxBackgroundFragment in syntaxBackgroundFragments {
+            let rect = rect(for: syntaxBackgroundFragment, inCanvasOfSize: canvasSize)
+            let roundedCorners = syntaxBackgroundFragment.roundedCorners
+            context.setFillColor(syntaxBackgroundFragment.color.cgColor)
+            if !roundedCorners.isEmpty && syntaxBackgroundFragment.cornerRadius > 0 {
+                let cornerRadius = syntaxBackgroundFragment.cornerRadius
+                let cornerRadii = CGSize(width: cornerRadius, height: cornerRadius)
+                let bezierPath = UIBezierPath(roundedRect: rect, byRoundingCorners: roundedCorners, cornerRadii: cornerRadii)
+                context.addPath(bezierPath.cgPath)
+                context.fillPath()
+            } else {
+                context.fill(rect)
+            }
+        }
+        context.restoreGState()
+    }
+
     private func drawHighlightedRanges(to context: CGContext, inCanvasOfSize canvasSize: CGSize) {
         guard !highlightedRangeFragments.isEmpty else {
             return

@@ -341,19 +341,23 @@ private extension LineController {
     }
 
     private func lineFragmentController(for lineFragment: LineFragment) -> LineFragmentController {
-        if let lineFragmentController = lineFragmentControllers[lineFragment.id] {
-            lineFragmentController.lineFragment = lineFragment
-            return lineFragmentController
+        let lineFragmentController: LineFragmentController
+        if let cachedLineFragmentController = lineFragmentControllers[lineFragment.id] {
+            cachedLineFragmentController.lineFragment = lineFragment
+            lineFragmentController = cachedLineFragmentController
         } else {
-            let lineFragmentController = LineFragmentController(
+            lineFragmentController = LineFragmentController(
                 lineFragment: lineFragment,
                 invisibleCharacterConfiguration: invisibleCharacterConfiguration
             )
             lineFragmentController.delegate = self
             lineFragmentControllers[lineFragment.id] = lineFragmentController
             applyTheme(to: lineFragmentController)
-            return lineFragmentController
         }
+        // The line may have been restyled since the line fragment was last displayed, for example
+        // because syntax highlighting it finished, so the backgrounds are rebuilt when displaying it.
+        lineFragmentController.updateSyntaxBackgrounds()
+        return lineFragmentController
     }
 
     private func redisplayLineFragments() {
@@ -453,5 +457,9 @@ extension LineController: LineFragmentControllerDelegate {
         let lineFragment = controller.lineFragment
         let range = NSRange(location: line.location + lineFragment.visibleRange.location, length: lineFragment.visibleRange.length)
         return stringView.substring(in: range)
+    }
+
+    func attributedString(in controller: LineFragmentController) -> NSAttributedString? {
+        attributedString
     }
 }
