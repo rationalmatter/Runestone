@@ -16,7 +16,23 @@ The theme determines the text styling and colors to use when syntax highlighting
 - <doc:Theme/fontTraits(for:)-38bfk>
 - <doc:Theme/textColor(for:)>
 
-The functions should return a font, font traits, and a color for a _highlight name_ which corresponds to a name specified in a Tree-sitter highlights query. For more information on Tree-sitter highlight queries, please refer to <doc:AddingATreeSitterLanguage>.
+The functions should return a font, font traits, and a color for a _highlight name_ which corresponds to a name specified in a Tree-sitter highlights query.
+
+A theme may also return a ``BackgroundStyle`` from its implementation of `background(for:)` to draw a background behind a syntax highlighted range, underneath the text and any search or marked-text highlights.
+
+```swift
+func background(for highlightName: String) -> BackgroundStyle? {
+    if highlightName == "text.literal" {
+        // A rounded chip behind the range. A style with fillsLineWidth set to true instead
+        // extends the background to the trailing edge of the line, which suits multi-line
+        // ranges such as code blocks; combine that with a corner radius of 0 so the
+        // per-line backgrounds join into a continuous band.
+        return BackgroundStyle(color: .secondarySystemFill, cornerRadius: 4)
+    }
+    return nil
+}
+```
+ For more information on Tree-sitter highlight queries, please refer to <doc:AddingATreeSitterLanguage>.
 
 Highlight names are strings defined by the highlights query in the parser, and as such, there is no fixed set of highlight names used by Runestone. Consult the highlights query of the language you are using. This query is typically in a file named highlights.scm.
 
