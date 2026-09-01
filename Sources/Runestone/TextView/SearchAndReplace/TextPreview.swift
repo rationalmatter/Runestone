@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// Provides a peek into the underlying attributed string of a text view.
 ///
@@ -49,6 +50,7 @@ public final class TextPreview {
                 remainingLength -= range.length
             }
         }
+        resultingAttributedString.applyExportableSyntaxBackgrounds()
         attributedString = resultingAttributedString
     }
 
