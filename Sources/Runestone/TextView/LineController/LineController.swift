@@ -94,6 +94,7 @@ final class LineController {
     private var isStringInvalid = true
     private var isDefaultAttributesInvalid = true
     private var isSyntaxHighlightingInvalid = true
+    private var isSyntaxBackgroundsInvalid = false
     private var isTypesetterInvalid = true
     private var _lineHeight: CGFloat?
     private var lineFragmentTree: LineFragmentTree
@@ -201,6 +202,7 @@ private extension LineController {
         updateDefaultAttributesIfNecessary()
         updateSyntaxHighlightingIfNecessary(async: syntaxHighlightAsynchronously)
         updateTypesetterIfNecessary()
+        updateSyntaxBackgroundsOnLineFragmentControllersIfNecessary()
     }
 
     private func typesetLineFragments(_ typesetAmount: TypesetAmount) {
@@ -247,6 +249,7 @@ private extension LineController {
                     tabWidth: tabWidth
                 )
                 defaultStringAttributes.apply(to: input.attributedString)
+                isSyntaxBackgroundsInvalid = true
             }
             isDefaultAttributesInvalid = false
             isSyntaxHighlightingInvalid = true
@@ -287,6 +290,7 @@ private extension LineController {
                     self.isSyntaxHighlightingInvalid = false
                     self.isTypesetterInvalid = true
                     self.redisplayLineFragments()
+                    self.updateSyntaxBackgroundsOnLineFragmentControllers()
                     if abs(self.lineWidth - oldWidth) > CGFloat.ulpOfOne {
                         self.delegate?.lineControllerDidInvalidateLineWidthDuringAsyncSyntaxHighlight(self)
                     }
@@ -297,6 +301,7 @@ private extension LineController {
             syntaxHighlighter.syntaxHighlight(input)
             isSyntaxHighlightingInvalid = false
             isTypesetterInvalid = true
+            isSyntaxBackgroundsInvalid = true
         }
     }
 
@@ -353,10 +358,10 @@ private extension LineController {
             lineFragmentController.delegate = self
             lineFragmentControllers[lineFragment.id] = lineFragmentController
             applyTheme(to: lineFragmentController)
+            // The initial value of the line fragment does not trigger its didSet, so the freshly
+            // created controller builds its backgrounds here.
+            lineFragmentController.updateSyntaxBackgrounds()
         }
-        // The line may have been restyled since the line fragment was last displayed, for example
-        // because syntax highlighting it finished, so the backgrounds are rebuilt when displaying it.
-        lineFragmentController.updateSyntaxBackgrounds()
         return lineFragmentController
     }
 
@@ -368,6 +373,21 @@ private extension LineController {
         updateLineHeight(for: newLineFragments)
         reapplyLineFragmentToLineFragmentControllers()
         setNeedsDisplayOnLineFragmentViews()
+    }
+
+    private func updateSyntaxBackgroundsOnLineFragmentControllersIfNecessary() {
+        if isSyntaxBackgroundsInvalid {
+            updateSyntaxBackgroundsOnLineFragmentControllers()
+            isSyntaxBackgroundsInvalid = false
+        }
+    }
+
+    // Rebuilding when the line is restyled rather than on every layout pass keeps background
+    // extraction off the scrolling hot path. Restyles are rare compared to layout passes.
+    private func updateSyntaxBackgroundsOnLineFragmentControllers() {
+        for (_, lineFragmentController) in lineFragmentControllers {
+            lineFragmentController.updateSyntaxBackgrounds()
+        }
     }
 
     private func reapplyLineFragmentToLineFragmentControllers() {

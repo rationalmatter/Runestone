@@ -21,6 +21,17 @@ final class ThemeBackgroundTests: XCTestCase {
         XCTAssertNil(attributedString.attribute(.syntaxBackground, at: 0, effectiveRange: nil))
     }
 
+    func testExportedStringCarriesBackgroundColor() {
+        // TextView draws backgrounds from the internal attribute, but strings returned from
+        // StringSyntaxHighlighter are documented to render in UILabel/UITextView, which need
+        // the standard .backgroundColor attribute.
+        let style = BackgroundStyle(color: .red, cornerRadius: 4)
+        let theme = MockTheme(backgrounds: ["string": style])
+        let attributedString = syntaxHighlight(text, with: theme)
+        XCTAssertEqual(attributedString.attribute(.backgroundColor, at: 5, effectiveRange: nil) as? UIColor, .red)
+        XCTAssertNil(attributedString.attribute(.backgroundColor, at: 0, effectiveRange: nil))
+    }
+
     func testNoBackgroundIsAppliedWhenTheThemeReturnsNil() {
         let theme = MockTheme(textColors: ["string": .green])
         let attributedString = syntaxHighlight(text, with: theme)
