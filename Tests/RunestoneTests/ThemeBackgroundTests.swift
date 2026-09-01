@@ -32,6 +32,17 @@ final class ThemeBackgroundTests: XCTestCase {
         XCTAssertNil(attributedString.attribute(.backgroundColor, at: 0, effectiveRange: nil))
     }
 
+    func testQueryWithNonASCIICommentStillHighlights() {
+        // A query's byte length must be measured in UTF-8: a length in characters truncates
+        // any query with non-ASCII content into a syntax error and highlighting silently stops.
+        let query = TreeSitterLanguage.Query(string: "; comment with an em dash \u{2014} and emoji \u{1F389}\n(string) @string")
+        let language = TreeSitterLanguage(tree_sitter_python(), highlightsQuery: query)
+        let theme = MockTheme(textColors: ["string": .green])
+        let syntaxHighlighter = StringSyntaxHighlighter(theme: theme, language: language)
+        let attributedString = syntaxHighlighter.syntaxHighlight(text)
+        XCTAssertEqual(attributedString.attribute(.foregroundColor, at: 5, effectiveRange: nil) as? UIColor, .green)
+    }
+
     func testNoBackgroundIsAppliedWhenTheThemeReturnsNil() {
         let theme = MockTheme(textColors: ["string": .green])
         let attributedString = syntaxHighlight(text, with: theme)

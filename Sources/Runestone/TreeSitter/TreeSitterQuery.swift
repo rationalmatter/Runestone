@@ -21,7 +21,10 @@ final class TreeSitterQuery {
         let errorOffset = UnsafeMutablePointer<UInt32>.allocate(capacity: 1)
         let errorType = UnsafeMutablePointer<TSQueryError>.allocate(capacity: 1)
         let pointer = source.withCString { cstr in
-            ts_query_new(language, cstr, UInt32(source.count), errorOffset, errorType)
+            // The length is in bytes, and the C string is UTF-8: source.count would under-report
+            // any query containing non-ASCII (an accented comment, an emoji), truncating the query
+            // into a syntax error and silently disabling highlighting.
+            ts_query_new(language, cstr, UInt32(source.utf8.count), errorOffset, errorType)
         }
         defer {
             errorOffset.deallocate()
