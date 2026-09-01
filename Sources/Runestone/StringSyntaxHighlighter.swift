@@ -72,27 +72,12 @@ public final class StringSyntaxHighlighter {
             byteRange: byteRange
         )
         syntaxHighlighter.syntaxHighlight(syntaxHighlighterInput)
-        applyExportableSyntaxBackgrounds(to: mutableAttributedString)
+        mutableAttributedString.applyExportableSyntaxBackgrounds()
         return mutableAttributedString
     }
 }
 
 private extension StringSyntaxHighlighter {
-    /// Backgrounds are drawn by TextView from an internal attribute that UILabel and UITextView do
-    /// not recognize. Mirror the background's fill color to .backgroundColor so strings returned
-    /// from this highlighter render a background in standard text components. The corner radius and
-    /// fillsLineWidth of ``BackgroundStyle`` only apply when the string is displayed in a TextView.
-    private func applyExportableSyntaxBackgrounds(to attributedString: NSMutableAttributedString) {
-        let range = NSRange(location: 0, length: attributedString.length)
-        attributedString.beginEditing()
-        attributedString.enumerateAttribute(.syntaxBackground, in: range) { value, attributeRange, _ in
-            if let style = value as? BackgroundStyle {
-                attributedString.addAttribute(.backgroundColor, value: style.color, range: attributeRange)
-            }
-        }
-        attributedString.endEditing()
-    }
-
     private func applyLineHeightMultiplier(to attributedString: NSMutableAttributedString) {
         let scaledLineHeight = theme.font.totalLineHeight * lineHeightMultiplier
         let mutableParagraphStyle = getMutableParagraphStyle(from: attributedString)
