@@ -145,6 +145,22 @@ extension TextInputStringTokenizerTests {
         let isAtBoundary = tokenizer.isPosition(position, atBoundary: .line, inDirection: textDirection)
         XCTAssertFalse(isAtBoundary)
     }
+
+    // A line that isn't visible is invalidated but not typeset again when text is replaced, so its line fragments
+    // may still describe a longer string than the one we have. Moving to a line boundary must not use those stale
+    // bounds to read into the string.
+    func testMovingToEndOfLineFragmentAfterReplacingTextWithShorterText() {
+        let context = makeTokenizerContext()
+        let stringView = context.stringView
+        let remainingLength = 20
+        let removedRange = NSRange(location: remainingLength, length: stringView.string.length - remainingLength)
+        let textEditHelper = TextEditHelper(stringView: stringView, lineManager: context.lineManager, lineEndings: .lf)
+        _ = textEditHelper.replaceText(in: removedRange, with: "")
+        let fromPosition = IndexedPosition(index: 10)
+        let textDirection = UITextDirection(rawValue: UITextStorageDirection.forward.rawValue)
+        let position = context.tokenizer.position(from: fromPosition, toBoundary: .line, inDirection: textDirection)
+        XCTAssertNil(position)
+    }
 }
 
 // MARK: - Movement in Paragraphs
@@ -263,6 +279,10 @@ Donec laoreet, massa sed commodo tincidunt, dui neque ullamcorper sapien, laoree
     }
 
     private func makeTokenizer() -> UITextInputTokenizer {
+        makeTokenizerContext().tokenizer
+    }
+
+    private func makeTokenizerContext() -> TokenizerContext {
         let textInputView = TextInputView(theme: DefaultTheme())
         let stringLength = textInputView.stringView.string.length
         textInputView.layoutLines(toLocation: stringLength)
@@ -281,10 +301,14 @@ Donec laoreet, massa sed commodo tincidunt, dui neque ullamcorper sapien, laoree
             let lineController = lineControllerStorage.getOrCreateLineController(for: line)
             lineController.prepareToDisplayString(toLocation: line.data.totalLength, syntaxHighlightAsynchronously: false)
         }
-        return TextInputStringTokenizer(textInput: textInputView,
-                                        stringView: stringView,
-                                        lineManager: lineManager,
-                                        lineControllerStorage: lineControllerStorage)
+        let tokenizer = TextInputStringTokenizer(textInput: textInputView,
+                                                 stringView: stringView,
+                                                 lineManager: lineManager,
+                                                 lineControllerStorage: lineControllerStorage)
+        return TokenizerContext(textInputView: textInputView,
+                                stringView: stringView,
+                                lineManager: lineManager,
+                                tokenizer: tokenizer)
     }
 }
 
@@ -305,3 +329,11 @@ extension TextInputStringTokenizerTests: LineControllerDelegate {
     func lineControllerDidInvalidateLineWidthDuringAsyncSyntaxHighlight(_ lineController: LineController) {}
 }
 // swiftlint:enable force_cast
+
+private struct TokenizerContext {
+    // The tokenizer only holds a weak reference to its text input, so we keep it alive for the duration of a test.
+    let textInputView: TextInputView
+    let stringView: StringView
+    let lineManager: LineManager
+    let tokenizer: UITextInputTokenizer
+}
