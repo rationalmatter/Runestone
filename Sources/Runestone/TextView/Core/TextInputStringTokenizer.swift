@@ -105,8 +105,8 @@ private extension TextInputStringTokenizer {
                 } else {
                     // Navigate to the end of the line but before the last character. This is a hack that avoids an issue where the caret is placed on the next line. The approach seems to be similar to what Textastic is doing.
                     // A line is not typeset again until it's displayed, so its line fragments may still describe a longer
-                    // string than the one we have, in which case we have no boundary to navigate to.
-                    guard preferredLocation <= stringView.string.length else {
+                    // string than the line does, in which case we have no boundary to navigate to.
+                    guard preferredLocation <= lineEndLocation else {
                         return nil
                     }
                     let lastCharacterRange = stringView.string.customRangeOfComposedCharacterSequence(at: lineFragmentRangeUpperBound)
