@@ -45,6 +45,8 @@ final class NSStringHelpersTests: XCTestCase {
         XCTAssertEqual(range, NSRange(location: 5, length: 2))
     }
 
+    // Foundation already accepts a zero-length range at the end of the string, so this is a boundary guard rather
+    // than a regression test: it passed before the range was capped and pins the behaviour the capping must preserve.
     func testComposedCharacterSequenceAtEndOfString() {
         let str = "Hello" as NSString
         let range = str.customRangeOfComposedCharacterSequence(at: str.length)
