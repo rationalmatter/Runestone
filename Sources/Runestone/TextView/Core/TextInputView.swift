@@ -734,8 +734,11 @@ final class TextInputView: UIView, UITextInput {
         }
     }
 
+    // Copy and Cut read the selection through the NSRange overload of text(in:), which answers nil for an empty selection
+    // or one an edit left past the end of the text. The UITextRange overload caps such a range for UIKit instead, and
+    // acting on that answer would overwrite the pasteboard and have Cut delete with the uncapped range.
     override func copy(_ sender: Any?) {
-        if let selectedTextRange = selectedTextRange, let text = text(in: selectedTextRange) {
+        if let selectedRange = selectedRange?.nonNegativeLength, let text = text(in: selectedRange) {
             UIPasteboard.general.string = text
         }
     }
@@ -750,9 +753,9 @@ final class TextInputView: UIView, UITextInput {
     }
 
     override func cut(_ sender: Any?) {
-        if let selectedTextRange = selectedTextRange, let text = text(in: selectedTextRange) {
+        if let selectedRange = selectedRange?.nonNegativeLength, let text = text(in: selectedRange) {
             UIPasteboard.general.string = text
-            replace(selectedTextRange, withText: "")
+            replace(IndexedRange(selectedRange), withText: "")
         }
     }
 
@@ -1110,8 +1113,9 @@ extension TextInputView {
     }
 
     func firstRect(for range: UITextRange) -> CGRect {
+        // A range we did not create can't be measured; answer an empty rect rather than trapping.
         guard let indexedRange = range as? IndexedRange else {
-            fatalError("Expected range to be of type \(IndexedRange.self)")
+            return .zero
         }
         return layoutManager.firstRect(for: indexedRange.range)
     }
@@ -1221,11 +1225,14 @@ extension TextInputView {
     }
 
     func text(in range: UITextRange) -> String? {
-        if let indexedRange = range as? IndexedRange {
-            return text(in: indexedRange.range.nonNegativeLength)
-        } else {
-            return nil
+        // UIKit appends this answer without a nil check when deleting backward, so a foreign, stale or empty range
+        // answers with the text it still covers, or an empty string, never nil.
+        guard let indexedRange = range as? IndexedRange else {
+            return ""
         }
+        let stringRange = NSRange(location: 0, length: stringView.string.length)
+        let cappedRange = indexedRange.range.nonNegativeLength.capped(to: stringRange)
+        return text(in: cappedRange) ?? ""
     }
 
     func text(in range: NSRange) -> String? {
@@ -1557,12 +1564,9 @@ extension TextInputView {
 
     func compare(_ position: UITextPosition, to other: UITextPosition) -> ComparisonResult {
         guard let indexedPosition = position as? IndexedPosition, let otherIndexedPosition = other as? IndexedPosition else {
-            #if targetEnvironment(macCatalyst)
-            // Mac Catalyst may pass <uninitialized> to `position`. I'm not sure what the right way to deal with that is but returning .orderedSame seems to work.
+            // UIKit may pass a position we did not create: <uninitialized> on Mac Catalyst, and a foreign position when
+            // a hardware up/down arrow key moves the caret on iPad. It can't be ordered, so treat it as equal rather than trapping.
             return .orderedSame
-            #else
-            fatalError("Positions must be of type \(IndexedPosition.self)")
-            #endif
         }
         if indexedPosition.index < otherIndexedPosition.index {
             return .orderedAscending

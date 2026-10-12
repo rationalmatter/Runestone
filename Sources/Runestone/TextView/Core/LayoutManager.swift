@@ -237,11 +237,15 @@ final class LayoutManager {
 // MARK: - UITextInput
 extension LayoutManager {
     func firstRect(for range: NSRange) -> CGRect {
-        guard let line = lineManager.line(containingCharacterAt: range.location) else {
-            fatalError("Cannot find first rect.")
+        // UIKit can ask about a range it held across an edit that shrank the text (a keyboard candidate refresh after
+        // a selection change), so cap it to the text, as the caret rect does, instead of trapping.
+        let cappedRange = range.capped(to: NSRange(location: 0, length: stringView.string.length))
+        guard let line = lineManager.line(containingCharacterAt: cappedRange.location) else {
+            // Only reachable if the line tree disagrees with the string; there is no line to measure against.
+            return .zero
         }
         let lineController = lineControllerStorage.getOrCreateLineController(for: line)
-        let localRange = NSRange(location: range.location - line.location, length: min(range.length, line.value))
+        let localRange = NSRange(location: cappedRange.location - line.location, length: min(cappedRange.length, line.value))
         let lineContentsRect = lineController.firstRect(for: localRange)
         let visibleWidth = viewport.width - gutterWidthService.gutterWidth
         let xPosition = lineContentsRect.minX + textContainerInset.left + gutterWidthService.gutterWidth
