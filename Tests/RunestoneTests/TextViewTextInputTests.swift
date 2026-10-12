@@ -77,10 +77,80 @@ extension TextViewTextInputTests {
     }
 }
 
+// MARK: - Cut and Copy
+// Reading the pasteboard's contents raises the paste permission alert and blocks the test, so these tests watch its
+// change count instead, which reads without one.
+extension TextViewTextInputTests {
+    // UIKit can set a selection from a range it held across an edit that shrank the text. text(in:) caps that range for
+    // UIKit, but Cut and Copy must not act on it: cutting would delete past the end of the text.
+    func testCuttingStaleSelectionAfterTextShrankChangesNothing() throws {
+        let textView = makeTextView(text: "Hello world")
+        let staleRange = textView.textRange(from: textView.beginningOfDocument, to: textView.endOfDocument)!
+        textView.selectedTextRange = staleRange
+        textView.text = "Hi"
+        textView.selectedTextRange = staleRange
+        let changeCount = UIPasteboard.general.changeCount
+        try editActionsResponder(of: textView).cut(nil)
+        XCTAssertEqual(textView.text, "Hi")
+        XCTAssertEqual(UIPasteboard.general.changeCount, changeCount)
+    }
+
+    func testCopyingStaleSelectionAfterTextShrankKeepsPasteboard() throws {
+        let textView = makeTextView(text: "Hello world")
+        let staleRange = textView.textRange(from: textView.beginningOfDocument, to: textView.endOfDocument)!
+        textView.selectedTextRange = staleRange
+        textView.text = "Hi"
+        textView.selectedTextRange = staleRange
+        let changeCount = UIPasteboard.general.changeCount
+        try editActionsResponder(of: textView).copy(nil)
+        XCTAssertEqual(UIPasteboard.general.changeCount, changeCount)
+    }
+
+    func testCuttingEmptySelectionChangesNothing() throws {
+        let textView = makeTextView(text: "Hello world")
+        textView.selectedTextRange = textView.textRange(from: textView.endOfDocument, to: textView.endOfDocument)
+        let changeCount = UIPasteboard.general.changeCount
+        try editActionsResponder(of: textView).cut(nil)
+        XCTAssertEqual(textView.text, "Hello world")
+        XCTAssertEqual(UIPasteboard.general.changeCount, changeCount)
+    }
+
+    func testCopyingEmptySelectionKeepsPasteboard() throws {
+        let textView = makeTextView(text: "Hello world")
+        textView.selectedTextRange = textView.textRange(from: textView.endOfDocument, to: textView.endOfDocument)
+        let changeCount = UIPasteboard.general.changeCount
+        try editActionsResponder(of: textView).copy(nil)
+        XCTAssertEqual(UIPasteboard.general.changeCount, changeCount)
+    }
+
+    func testCuttingSelectionRemovesItAndWritesPasteboard() throws {
+        let textView = makeTextView(text: "Hello world")
+        textView.selectedTextRange = rangeOfSecondWord(in: textView)
+        let changeCount = UIPasteboard.general.changeCount
+        try editActionsResponder(of: textView).cut(nil)
+        XCTAssertEqual(textView.text, "Hello ")
+        XCTAssertNotEqual(UIPasteboard.general.changeCount, changeCount)
+    }
+
+    func testCopyingSelectionKeepsTextAndWritesPasteboard() throws {
+        let textView = makeTextView(text: "Hello world")
+        textView.selectedTextRange = rangeOfSecondWord(in: textView)
+        let changeCount = UIPasteboard.general.changeCount
+        try editActionsResponder(of: textView).copy(nil)
+        XCTAssertEqual(textView.text, "Hello world")
+        XCTAssertNotEqual(UIPasteboard.general.changeCount, changeCount)
+    }
+}
+
 private extension TextViewTextInputTests {
     private static let textViewFrame = CGRect(x: 0, y: 0, width: 320, height: 480)
 
     private static let secondWordOffset = ("Hello " as NSString).length
+
+    // The edit menu sends Cut and Copy to the text input view the text view hosts, not to the text view itself.
+    private func editActionsResponder(of textView: TextView) throws -> TextInputView {
+        try XCTUnwrap(textView.subviews.lazy.compactMap { $0 as? TextInputView }.first)
+    }
 
     // The range of "world" in "Hello world".
     private func rangeOfSecondWord(in textView: TextView) -> UITextRange {

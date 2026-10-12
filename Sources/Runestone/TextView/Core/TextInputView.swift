@@ -734,8 +734,11 @@ final class TextInputView: UIView, UITextInput {
         }
     }
 
+    // Copy and Cut read the selection through the NSRange overload of text(in:), which answers nil for an empty selection
+    // or one an edit left past the end of the text. The UITextRange overload caps such a range for UIKit instead, and
+    // acting on that answer would overwrite the pasteboard and have Cut delete with the uncapped range.
     override func copy(_ sender: Any?) {
-        if let selectedTextRange = selectedTextRange, let text = text(in: selectedTextRange) {
+        if let selectedRange = selectedRange?.nonNegativeLength, let text = text(in: selectedRange) {
             UIPasteboard.general.string = text
         }
     }
@@ -750,9 +753,9 @@ final class TextInputView: UIView, UITextInput {
     }
 
     override func cut(_ sender: Any?) {
-        if let selectedTextRange = selectedTextRange, let text = text(in: selectedTextRange) {
+        if let selectedRange = selectedRange?.nonNegativeLength, let text = text(in: selectedRange) {
             UIPasteboard.general.string = text
-            replace(selectedTextRange, withText: "")
+            replace(IndexedRange(selectedRange), withText: "")
         }
     }
 
