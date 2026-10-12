@@ -59,6 +59,24 @@ extension TextViewTextInputTests {
     }
 }
 
+// MARK: - First Rect
+extension TextViewTextInputTests {
+    // The keyboard refreshes its candidate bar after a selection change by asking for the first rect of a range it held
+    // across an edit, which can start past the end of the shorter text. It's measured as the end of the text.
+    func testFirstRectForRangePastEndAfterTextShrankIsRectAtEndOfText() {
+        let textView = makeTextView(text: "Hello world")
+        let range = rangeOfSecondWord(in: textView)
+        textView.text = "Hi"
+        let endRange = textView.textRange(from: textView.endOfDocument, to: textView.endOfDocument)!
+        XCTAssertEqual(textView.firstRect(for: range), textView.firstRect(for: endRange))
+    }
+
+    func testFirstRectForForeignRangeIsZero() {
+        let textView = makeTextView()
+        XCTAssertEqual(textView.firstRect(for: ForeignTextRange()), .zero)
+    }
+}
+
 private extension TextViewTextInputTests {
     private static let textViewFrame = CGRect(x: 0, y: 0, width: 320, height: 480)
 

@@ -1110,8 +1110,9 @@ extension TextInputView {
     }
 
     func firstRect(for range: UITextRange) -> CGRect {
+        // A range we did not create can't be measured; answer an empty rect rather than trapping.
         guard let indexedRange = range as? IndexedRange else {
-            fatalError("Expected range to be of type \(IndexedRange.self)")
+            return .zero
         }
         return layoutManager.firstRect(for: indexedRange.range)
     }
