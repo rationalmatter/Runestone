@@ -24,8 +24,51 @@ extension TextViewTextInputTests {
     }
 }
 
+// MARK: - Text in Range
+extension TextViewTextInputTests {
+    // Deleting backward appends the text UIKit reads around the caret, so an empty range must answer "" rather than nil.
+    func testTextInEmptyRangeIsEmptyString() {
+        let textView = makeTextView()
+        let range = textView.textRange(from: textView.endOfDocument, to: textView.endOfDocument)!
+        XCTAssertEqual(textView.text(in: range), "")
+    }
+
+    func testTextInRangePastEndAfterTextShrankIsEmptyString() {
+        let textView = makeTextView(text: "Hello world")
+        let range = rangeOfSecondWord(in: textView)
+        textView.text = "Hi"
+        XCTAssertEqual(textView.text(in: range), "")
+    }
+
+    func testTextInRangeOverlappingEndAfterTextShrankIsCappedToText() {
+        let textView = makeTextView(text: "Hello world")
+        let range = textView.textRange(from: textView.beginningOfDocument, to: textView.endOfDocument)!
+        textView.text = "Hi"
+        XCTAssertEqual(textView.text(in: range), "Hi")
+    }
+
+    func testTextInForeignRangeIsEmptyString() {
+        let textView = makeTextView()
+        XCTAssertEqual(textView.text(in: ForeignTextRange()), "")
+    }
+
+    func testTextInRange() {
+        let textView = makeTextView(text: "Hello world")
+        let range = rangeOfSecondWord(in: textView)
+        XCTAssertEqual(textView.text(in: range), "world")
+    }
+}
+
 private extension TextViewTextInputTests {
     private static let textViewFrame = CGRect(x: 0, y: 0, width: 320, height: 480)
+
+    private static let secondWordOffset = ("Hello " as NSString).length
+
+    // The range of "world" in "Hello world".
+    private func rangeOfSecondWord(in textView: TextView) -> UITextRange {
+        let start = textView.position(from: textView.beginningOfDocument, offset: Self.secondWordOffset)!
+        return textView.textRange(from: start, to: textView.endOfDocument)!
+    }
 
     private func makeTextView(text: String = "Hello world") -> TextView {
         let textView = TextView(frame: Self.textViewFrame)
@@ -35,3 +78,5 @@ private extension TextViewTextInputTests {
 }
 
 private final class ForeignTextPosition: UITextPosition {}
+
+private final class ForeignTextRange: UITextRange {}

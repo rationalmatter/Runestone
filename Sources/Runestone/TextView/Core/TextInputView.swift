@@ -1221,11 +1221,14 @@ extension TextInputView {
     }
 
     func text(in range: UITextRange) -> String? {
-        if let indexedRange = range as? IndexedRange {
-            return text(in: indexedRange.range.nonNegativeLength)
-        } else {
-            return nil
+        // UIKit appends this answer without a nil check when deleting backward, so a foreign, stale or empty range
+        // answers with the text it still covers, or an empty string, never nil.
+        guard let indexedRange = range as? IndexedRange else {
+            return ""
         }
+        let stringRange = NSRange(location: 0, length: stringView.string.length)
+        let cappedRange = indexedRange.range.nonNegativeLength.capped(to: stringRange)
+        return text(in: cappedRange) ?? ""
     }
 
     func text(in range: NSRange) -> String? {
