@@ -653,20 +653,6 @@ open class TextView: UIScrollView {
         let height = baseContentSize.height + verticalOverscrollLength
         return CGSize(width: width, height: height)
     }
-    @available(iOS 26.0, *)
-    private var scrollPocketView: UIView? {
-        if let _scrollPocketView = _scrollPocketView {
-            return _scrollPocketView
-        } else {
-            let stringType = String("IU_".reversed()) + "Scroll" + String("tekcoP".reversed())
-            let scrollPocketView = subviews.first { view in
-                String(describing: type(of: view)) == stringType
-            }
-            _scrollPocketView = scrollPocketView
-            return scrollPocketView
-        }
-    }
-    private var _scrollPocketView: UIView?
 
     /// Create a new text view.
     /// - Parameter frame: The frame rectangle of the text view.
@@ -703,10 +689,10 @@ open class TextView: UIScrollView {
         textInputView.scrollViewWidth = frame.width
         textInputView.frame = CGRect(x: 0, y: 0, width: max(contentSize.width, frame.width), height: max(contentSize.height, frame.height))
         textInputView.viewport = CGRect(origin: contentOffset, size: frame.size)
-        bringSubviewToFront(textInputView.gutterContainerView)
-        if #available(iOS 26, *), let scrollPocketView {
-            bringSubviewToFront(scrollPocketView)
-        }
+        // Directly above the text rather than at the front: whatever UIKit lays over the content, such as the
+        // scroll edge effect (a view whose private type differs between iOS releases), then covers the line
+        // numbers as it covers the text.
+        insertSubview(textInputView.gutterContainerView, aboveSubview: textInputView)
     }
 
     /// Called when the safe area of the view changes.
